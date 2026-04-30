@@ -94,6 +94,13 @@ lora_config = LoraConfig(
 
 ---
 
+## Notebook Link
+
+- [Finetune - Classification Head](https://drive.google.com/file/d/1uMMiW2PzBYK4n4Dgo5oVB_f9wcLXyZDm/view?usp=sharing)
+- [Finetune - LoRA](https://drive.google.com/file/d/1wpdEuXt-vvglr75RoG-DQ8JtRdIKNnLS/view?usp=sharing)
+
+---
+
 ## Results & Evaluation
 
 Evaluation is performed after each epoch using:
