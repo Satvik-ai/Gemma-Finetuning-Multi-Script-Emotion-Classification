@@ -1,4 +1,4 @@
-# Gemma 3 1B — Task-Specific Fine-Tuning for Emotion Classification
+# Gemma 3 1B — Task-Specific Fine-Tuning for Multi-script Emotion Classification
 
 Fine-tuning Google's **Gemma 3 1B Instruct** model for multilingual emotion classification using three progressively efficient strategies: classification head fine-tuning, LoRA, and QLoRA.
 
