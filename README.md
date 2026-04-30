@@ -1,35 +1,36 @@
 # Gemma 3 1B — Task-Specific Fine-Tuning for Multi-script Emotion Classification
 
-Fine-tuning Google's **Gemma 3 1B Instruct** model for multilingual emotion classification using three progressively efficient strategies: classification head fine-tuning, LoRA, and QLoRA.
+Fine-tuning Google's **Gemma 3 1B Instruct** model for multilingual emotion classification using two progressively efficient strategies: classification head fine-tuning, and LoRA.
 
 ---
 
 ## Overview
 
-This project demonstrates three approaches to fine-tuning the `google/gemma-3-1b-it` model for a **6-class emotion classification** task on multilingual text. The notebook is structured as a progressive exploration — from the simplest (frozen backbone + trainable head) to the most memory-efficient (4-bit quantization + LoRA).
+This project demonstrates two approaches to fine-tuning the `google/gemma-3-1b-it` model for a **6-class emotion classification** task on multilingual text.
 
 | Approach | Trainable Params | Memory Usage |
 |---|---|---|
 | Classification Head Only | ~6K (score layer) | Full BF16 (~2–3 GB) |
 | LoRA | Low-rank adapters on attention | BF16 + LoRA overhead |
-| QLoRA | Low-rank adapters on attention | 4-bit base + BF16 LoRA |
 
 ---
 
 ## Task Description
 
-**Multilingual Emotion Classification** — Given a sentence (which may be written in a low-resource or non-Latin script language), predict one of 6 emotion categories.
+**Multilingual Emotion Classification** — Given a sentence (which is written in a low-resource script language), predict one of 6 emotion categories.
 
 **Emotion Labels:**
 - Happy
 - Disgust
 - Fear
-- *(and 3 additional classes inferred from the dataset)*
+- Surprise
+- Sad
+- Anger
 
 The dataset includes sentences from linguistically diverse and low-resource languages such as:
 - **Santali** (Ol Chiki script)
 - **Kashmiri** (Arabic script)
-- **Manipuri / Meitei** (Meitei Mayek script)
+- **Manipuri** (Meitei Mayek script)
 
 ---
 
@@ -84,26 +85,6 @@ lora_config = LoraConfig(
 
 ---
 
-### 3. QLoRA Fine-Tuning
-
-**QLoRA** combines 4-bit quantization of the base model with LoRA adapters trained in BF16. This dramatically reduces GPU memory while maintaining performance close to full fine-tuning.
-
-```python
-quantization_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.bfloat16,
-    bnb_4bit_use_double_quant=True,
-)
-```
-
-The base model is loaded in **4-bit NF4** precision (frozen), and LoRA adapter weights remain in **BF16** (trainable). `prepare_model_for_kbit_training()` is applied before attaching LoRA.
-
-**Pros:** Lowest memory footprint; enables fine-tuning on consumer-grade GPUs.  
-**Cons:** Slight overhead from dequantization during forward pass.
-
----
-
 ## Model Architecture
 
 - **Base Model:** `google/gemma-3-1b-it`
@@ -149,9 +130,3 @@ The best checkpoint (by macro F1) is automatically reloaded at the end of traini
 **Data Collator** — Dynamically pads each batch to the longest sequence in that batch (more efficient than dataset-level padding).
 
 **LoRA (Low-Rank Adaptation)** — Freezes the original model weights and injects trainable rank-decomposition matrices (`A` and `B`) into selected layers. Only `A` and `B` are updated during training; the original weights are unchanged.
-
-**QLoRA** — Extends LoRA by quantizing the frozen base model to 4-bit NF4 format, dramatically reducing memory. LoRA adapters remain in higher precision for stable gradient flow.
-
-**NF4 (Normal Float 4)** — A 4-bit data type optimized for normally distributed weights, used in QLoRA for better quantization fidelity than standard INT4.
-
-**Double Quantization** — Further compresses quantization constants themselves, saving additional memory (~0.37 bits/parameter).
